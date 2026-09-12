@@ -67,11 +67,12 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    gap: 4,
   },
   stepGroup: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 4,
   },
   label: {
     fontSize: 12,
