@@ -1,5 +1,5 @@
-import { Image, StyleSheet, View } from "react-native";
 import { Text } from "@/components/Text";
+import { Image, StyleSheet, View } from "react-native";
 
 export type InvoiceStep =
   | "invoice-details"
@@ -30,8 +30,8 @@ export function InvoiceProgressStepper({
   return (
     <View style={styles.row}>
       {STEPS.map((step, index) => {
-        const isStepActive = index <= activeIndex;
-        const isChevronActive = index < activeIndex;
+        const isStepActive = index === activeIndex;
+        const isChevronActive = index === activeIndex;
         return (
           <View key={step.key} style={styles.stepGroup}>
             <Text
@@ -47,9 +47,7 @@ export function InvoiceProgressStepper({
               source={require("@/assets/images/icons/chevron-right.png")}
               style={[
                 styles.chevron,
-                isChevronActive
-                  ? styles.chevronActive
-                  : styles.chevronInactive,
+                isChevronActive ? styles.chevronActive : styles.chevronInactive,
               ]}
               resizeMode="contain"
             />
@@ -68,13 +66,12 @@ export function InvoiceProgressStepper({
 const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 4,
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   stepGroup: {
     flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 4,
+    alignItems: "center",
   },
   label: {
     fontSize: 12,
@@ -88,8 +85,8 @@ const styles = StyleSheet.create({
     color: "#9CA3AF",
   },
   chevron: {
-    width: 14,
-    height: 14,
+    width: 18,
+    height: 18,
     marginTop: 2,
   },
   chevronActive: {
