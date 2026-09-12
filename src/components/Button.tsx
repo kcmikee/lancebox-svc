@@ -1,8 +1,8 @@
+import { Text } from "@/components/Text";
 import {
   ActivityIndicator,
   Pressable,
   StyleSheet,
-  Text,
   type StyleProp,
   type ViewStyle,
 } from "react-native";
@@ -14,6 +14,7 @@ type ButtonProps = {
   disabled?: boolean;
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
+  textColor?: string;
 };
 
 export function Button({
@@ -23,6 +24,7 @@ export function Button({
   disabled = false,
   onPress,
   style,
+  textColor = "#0B1E3F",
 }: ButtonProps) {
   return (
     <Pressable
@@ -34,11 +36,13 @@ export function Button({
     >
       {isLoading ? (
         <>
-          <ActivityIndicator size="small" color="#0B1E3F" />
-          <Text style={styles.text}>{loadingLabel ?? label}</Text>
+          <ActivityIndicator size="small" color={textColor} />
+          <Text style={[styles.text, { color: textColor }]}>
+            {loadingLabel ?? label}
+          </Text>
         </>
       ) : (
-        <Text style={styles.text}>{label}</Text>
+        <Text style={[styles.text, { color: textColor }]}>{label}</Text>
       )}
     </Pressable>
   );
@@ -57,6 +61,5 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#0B1E3F",
   },
 });

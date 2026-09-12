@@ -32,6 +32,26 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos to upload a logo.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/font/Pretendard-Light.ttf",
+            "./assets/font/Pretendard-Regular.ttf",
+            "./assets/font/Pretendard-Medium.ttf",
+            "./assets/font/Pretendard-SemiBold.ttf",
+            "./assets/font/Pretendard-Bold.ttf"
+          ]
+        }
       ]
     ],
     "experiments": {

@@ -1,21 +1,23 @@
 import { AuthTextField } from "@/components/AuthTextField";
 import { Button } from "@/components/Button";
+import { LoadingScreen } from "@/components/LoadingScreen";
 import { SocialButton } from "@/components/SocialButton";
-import { useAuth } from "@/store/auth";
+import { Text } from "@/components/Text";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useState } from "react";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const TRANSITION_MS = 900;
 
 export default function SignUp() {
-  const signIn = useAuth((state) => state.signIn);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   const isEmailValid = EMAIL_PATTERN.test(email);
   const isPasswordValid = password.length >= 8;
@@ -30,9 +32,16 @@ export default function SignUp() {
     setIsSubmitting(true);
     setTimeout(() => {
       setIsSubmitting(false);
-      signIn({ userId: email });
+      setIsTransitioning(true);
+      setTimeout(() => {
+        router.replace({ pathname: "/setup", params: { email } });
+      }, TRANSITION_MS);
     }, 1200);
   };
+
+  if (isTransitioning) {
+    return <LoadingScreen />;
+  }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>

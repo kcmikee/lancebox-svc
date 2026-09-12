@@ -1,7 +1,7 @@
+import { Text } from "@/components/Text";
 import { Ionicons } from "@expo/vector-icons";
 import {
   StyleSheet,
-  Text,
   TextInput,
   View,
   type KeyboardTypeOptions,
@@ -73,6 +73,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 15,
+    fontFamily: "Pretendard-Regular",
     color: "#111827",
   },
 });
