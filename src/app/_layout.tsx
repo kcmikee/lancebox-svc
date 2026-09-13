@@ -1,11 +1,26 @@
+import { ErrorFallback } from "@/components/ErrorFallback";
 import { LoadingScreen } from "@/components/LoadingScreen";
+import { reportError } from "@/lib/errorReporting";
+import { setupGlobalErrorHandler } from "@/lib/setupGlobalErrorHandler";
 import { useAuth } from "@/store/auth";
 import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
+import { Stack, type ErrorBoundaryProps } from "expo-router";
+import { useEffect } from "react";
+
+setupGlobalErrorHandler();
+
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  useEffect(() => {
+    reportError(error, "root:ErrorBoundary");
+  }, [error]);
+
+  return <ErrorFallback error={error} onRetry={retry} />;
+}
 
 export default function RootLayout() {
   const session = useAuth((state) => state.session);
   const isLoading = useAuth((state) => state.isLoading);
+  const hasHydrated = useAuth((state) => state.hasHydrated);
   const [fontsLoaded] = useFonts({
     "Pretendard-Light": require("@/assets/font/Pretendard-Light.ttf"),
     "Pretendard-Regular": require("@/assets/font/Pretendard-Regular.ttf"),
@@ -14,7 +29,7 @@ export default function RootLayout() {
     "Pretendard-Bold": require("@/assets/font/Pretendard-Bold.ttf"),
   });
 
-  if (!fontsLoaded || isLoading) {
+  if (!fontsLoaded || !hasHydrated || isLoading) {
     return <LoadingScreen />;
   }
 

@@ -2,43 +2,76 @@ import { ConfirmModal } from "@/components/ConfirmModal";
 import { InvoiceProgressStepper } from "@/components/InvoiceProgressStepper";
 import { SuccessModal } from "@/components/SuccessModal";
 import { Text } from "@/components/Text";
+import { buildSavedInvoice, nextInvoiceNumber } from "@/lib/buildInvoice";
+import { reportError } from "@/lib/errorReporting";
+import { formatAmount, formatDate, parseNumber } from "@/lib/invoiceFormat";
+import { downloadInvoicePdf } from "@/lib/invoicePdf";
+import { useInvoiceDraft } from "@/store/invoiceDraft";
+import { useInvoices } from "@/store/invoices";
 import { router } from "expo-router";
 import { useState } from "react";
-import { Image, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import {
+  Alert,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const ITEMS = [
-  {
-    description: "Web Design",
-    qty: "2.00",
-    unitPrice: "3,000,000",
-    amount: "6,000,000",
-  },
-  {
-    description: "Logo Design",
-    qty: "2.00",
-    unitPrice: "3,000,000",
-    amount: "6,000,000",
-  },
-  {
-    description: "Web Design",
-    qty: "2.00",
-    unitPrice: "3,000,000",
-    amount: "6,000,000",
-  },
-  {
-    description: "Logo Design",
-    qty: "2.00",
-    unitPrice: "3,000,000",
-    amount: "6,000,000",
-  },
-];
-
 export default function PreviewInvoice() {
+  const draft = useInvoiceDraft.getState();
+  const resetDraft = useInvoiceDraft((state) => state.reset);
+  const invoicesCount = useInvoices((state) => state.invoices.length);
+  const addInvoice = useInvoices((state) => state.addInvoice);
+
   const [isSaveInvoiceVisible, setIsSaveInvoiceVisible] = useState(false);
   const [isDownloadSuccessVisible, setIsDownloadSuccessVisible] =
     useState(false);
   const [isSaveSuccessVisible, setIsSaveSuccessVisible] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const invoiceNumber = nextInvoiceNumber(invoicesCount);
+  const previewInvoice = buildSavedInvoice(draft, invoiceNumber);
+  const currencySymbol = previewInvoice.currency.symbol;
+  const { subtotal, vatAmount, shippingAmount, total } = previewInvoice;
+
+  const handleSaveAndDownload = async () => {
+    setIsSaveInvoiceVisible(false);
+    setIsDownloading(true);
+    try {
+      await downloadInvoicePdf(previewInvoice);
+      addInvoice(previewInvoice);
+      resetDraft();
+      setIsSaveSuccessVisible(true);
+    } catch (error) {
+      reportError(error, "preview:downloadInvoicePdf:save");
+      Alert.alert(
+        "Something went wrong",
+        "We couldn't generate the invoice PDF. Please try again.",
+      );
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const handleDownloadOnly = async () => {
+    setIsSaveInvoiceVisible(false);
+    setIsDownloading(true);
+    try {
+      await downloadInvoicePdf(previewInvoice);
+      setIsDownloadSuccessVisible(true);
+    } catch (error) {
+      reportError(error, "preview:downloadInvoicePdf:skipSave");
+      Alert.alert(
+        "Something went wrong",
+        "We couldn't generate the invoice PDF. Please try again.",
+      );
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
@@ -71,29 +104,31 @@ export default function PreviewInvoice() {
           <View style={styles.invoiceNoRow}>
             <View style={styles.avatar} />
             <Text style={styles.invoiceNoLabel}>
-              Invoice No. <Text style={styles.invoiceNoValue}>#0001</Text>
+              Invoice No. <Text style={styles.invoiceNoValue}>#{invoiceNumber}</Text>
             </Text>
           </View>
 
           <View style={styles.infoRow}>
             <View style={styles.infoColumn}>
               <Text style={styles.infoLabel}>Bill To:</Text>
-              <Text style={styles.infoValue}>Mr Peter Abu</Text>
+              <Text style={styles.infoValue}>{draft.clientName}</Text>
             </View>
             <View style={styles.infoColumn}>
               <Text style={styles.infoLabel}>From:</Text>
-              <Text style={styles.infoValue}>Miss Olasubomi Akin</Text>
+              <Text style={styles.infoValue}>{draft.yourName}</Text>
             </View>
           </View>
 
           <View style={styles.infoRow}>
             <View style={styles.infoColumn}>
-              <Text style={styles.infoLabel}>Issuance date</Text>
-              <Text style={styles.infoValue}>Website Design For Lancebox</Text>
+              <Text style={styles.infoLabel}>Invoice Title</Text>
+              <Text style={styles.infoValue}>{draft.invoiceTitle}</Text>
             </View>
             <View style={styles.infoColumn}>
               <Text style={styles.infoLabel}>Issuance date</Text>
-              <Text style={styles.infoValue}>25/01/2023</Text>
+              <Text style={styles.infoValue}>
+                {formatDate(new Date())}
+              </Text>
             </View>
           </View>
 
@@ -104,16 +139,16 @@ export default function PreviewInvoice() {
               </Text>
               <Text style={[styles.tableHeaderCell, styles.colQty]}>Qty</Text>
               <Text style={[styles.tableHeaderCell, styles.colUnitPrice]}>
-                Unit Price(N)
+                Unit Price({currencySymbol})
               </Text>
               <Text style={[styles.tableHeaderCell, styles.colAmount]}>
-                Amount(N)
+                Amount({currencySymbol})
               </Text>
             </View>
 
-            {ITEMS.map((item, index) => (
+            {draft.items.map((item, index) => (
               <View
-                key={`${item.description}-${index}`}
+                key={item.id}
                 style={[
                   styles.tableRow,
                   index % 2 === 0 && styles.tableRowStriped,
@@ -123,13 +158,15 @@ export default function PreviewInvoice() {
                   {item.description}
                 </Text>
                 <Text style={[styles.tableCell, styles.colQty]}>
-                  {item.qty}
+                  {item.quantity}
                 </Text>
                 <Text style={[styles.tableCell, styles.colUnitPrice]}>
-                  {item.unitPrice}
+                  {formatAmount(parseNumber(item.price))}
                 </Text>
                 <Text style={[styles.tableCell, styles.colAmount]}>
-                  {item.amount}
+                  {formatAmount(
+                    parseNumber(item.quantity) * parseNumber(item.price),
+                  )}
                 </Text>
               </View>
             ))}
@@ -138,20 +175,32 @@ export default function PreviewInvoice() {
           <View style={styles.summary}>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Subtotal:</Text>
-              <Text style={styles.summaryValue}>N12,000,000.00</Text>
+              <Text style={styles.summaryValue}>
+                {currencySymbol}
+                {formatAmount(subtotal)}
+              </Text>
             </View>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Tax:</Text>
-              <Text style={styles.summaryValue}>N1,440,000.00</Text>
+              <Text style={styles.summaryValue}>
+                {currencySymbol}
+                {formatAmount(vatAmount)}
+              </Text>
             </View>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Shipping:</Text>
-              <Text style={styles.summaryValue}>N500,000.00</Text>
+              <Text style={styles.summaryValue}>
+                {currencySymbol}
+                {formatAmount(shippingAmount)}
+              </Text>
             </View>
             <View style={styles.summaryDivider} />
             <View style={styles.summaryRow}>
               <Text style={styles.summaryTotalLabel}>Total:</Text>
-              <Text style={styles.summaryTotalValue}>N14,900,000.00</Text>
+              <Text style={styles.summaryTotalValue}>
+                {currencySymbol}
+                {formatAmount(total)}
+              </Text>
             </View>
           </View>
 
@@ -161,22 +210,26 @@ export default function PreviewInvoice() {
             <View style={styles.infoColumn}>
               <Text style={styles.infoLabel}>Terms of Payment</Text>
               <Text style={styles.infoValue}>
-                Payment will be made in installments
+                {draft.terms || "—"}
               </Text>
             </View>
             <View style={styles.infoColumn}>
               <Text style={styles.infoLabel}>Payment Details</Text>
               <Text style={styles.infoValue}>
                 Bank Number:{" "}
-                <Text style={styles.infoValueRegular}>0123456789</Text>
+                <Text style={styles.infoValueRegular}>
+                  {draft.bankNumber}
+                </Text>
               </Text>
               <Text style={styles.infoValue}>
                 Bank Name:{" "}
-                <Text style={styles.infoValueRegular}>Lance Bank</Text>
+                <Text style={styles.infoValueRegular}>{draft.bankName}</Text>
               </Text>
               <Text style={styles.infoValue}>
                 Account Name:{" "}
-                <Text style={styles.infoValueRegular}>Jane Doe</Text>
+                <Text style={styles.infoValueRegular}>
+                  {draft.accountName}
+                </Text>
               </Text>
             </View>
           </View>
@@ -185,8 +238,11 @@ export default function PreviewInvoice() {
         <Pressable
           style={styles.downloadButton}
           onPress={() => setIsSaveInvoiceVisible(true)}
+          disabled={isDownloading}
         >
-          <Text style={styles.downloadButtonText}>Download Pdf</Text>
+          <Text style={styles.downloadButtonText}>
+            {isDownloading ? "Preparing PDF…" : "Download Pdf"}
+          </Text>
         </Pressable>
 
         <Pressable
@@ -204,14 +260,8 @@ export default function PreviewInvoice() {
         message="Would you like to save your invoice to be able to edit it later?"
         primaryLabel="Yes"
         secondaryLabel="No"
-        onPrimaryPress={() => {
-          setIsSaveInvoiceVisible(false);
-          setIsSaveSuccessVisible(true);
-        }}
-        onSecondaryPress={() => {
-          setIsSaveInvoiceVisible(false);
-          setIsDownloadSuccessVisible(true);
-        }}
+        onPrimaryPress={handleSaveAndDownload}
+        onSecondaryPress={handleDownloadOnly}
       />
 
       <SuccessModal
@@ -220,7 +270,11 @@ export default function PreviewInvoice() {
         title="Download Successful"
         message="Your Invoice was downloaded successfully"
         buttonLabel="Done"
-        onButtonPress={() => setIsDownloadSuccessVisible(false)}
+        onButtonPress={() => {
+          resetDraft();
+          setIsDownloadSuccessVisible(false);
+          router.push("/");
+        }}
       />
 
       <SuccessModal

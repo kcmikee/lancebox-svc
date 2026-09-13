@@ -1,16 +1,53 @@
 import { NavigationDrawer } from "@/components/NavigationDrawer";
 import { Text } from "@/components/Text";
+import { reportError } from "@/lib/errorReporting";
+import { formatAmount } from "@/lib/invoiceFormat";
+import { downloadInvoicePdf } from "@/lib/invoicePdf";
+import { useInvoices, type SavedInvoice } from "@/store/invoices";
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useState } from "react";
-import { Image, Pressable, StyleSheet, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Home() {
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
+  const invoices = useInvoices((state) => state.invoices);
+  const hasInvoices = invoices.length > 0;
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  const handleRedownload = async (invoice: SavedInvoice) => {
+    if (downloadingId) {
+      return;
+    }
+    setDownloadingId(invoice.id);
+    try {
+      await downloadInvoicePdf(invoice);
+    } catch (error) {
+      reportError(error, "home:downloadInvoicePdf");
+      Alert.alert(
+        "Something went wrong",
+        "We couldn't generate the invoice PDF. Please try again.",
+      );
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
-      <View style={styles.content}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <Pressable
           style={styles.menuButton}
           onPress={() => setIsDrawerVisible(true)}
@@ -49,7 +86,7 @@ export default function Home() {
 
           <View style={[styles.card, styles.statsCard]}>
             <Text style={styles.statsCardLabel}>Invoices created</Text>
-            <Text style={styles.statsCardValue}>0</Text>
+            <Text style={styles.statsCardValue}>{invoices.length}</Text>
             <View style={styles.viewAllRow}>
               <Text style={styles.viewAllText}>View All</Text>
               <Image
@@ -63,45 +100,100 @@ export default function Home() {
 
         <Text style={styles.pastInvoicesHeading}>Past Invoices</Text>
 
-        <View style={styles.illustrationContainer}>
-          <View style={styles.circleBox}>
-            <View style={styles.circle} />
-
-            <View style={[styles.skeletonCard, styles.skeletonCardTop]}>
-              <View style={styles.skeletonIconCircle}>
-                <Image
-                  source={require("@/assets/images/icons/bx-search.png")}
-                  style={styles.skeletonIcon}
-                  resizeMode="contain"
-                />
+        {hasInvoices ? (
+          <View style={styles.invoiceList}>
+            {invoices.map((invoice) => (
+              <View key={invoice.id} style={styles.invoiceRow}>
+                <View style={styles.invoiceRowIconCircle}>
+                  <Image
+                    source={require("@/assets/images/icons/bx-search.png")}
+                    style={styles.invoiceRowIcon}
+                    resizeMode="contain"
+                  />
+                </View>
+                <View style={styles.invoiceRowInfo}>
+                  <Text style={styles.invoiceRowClient}>
+                    {invoice.clientName || "Untitled invoice"}
+                  </Text>
+                  <Text style={styles.invoiceRowMeta}>
+                    #{invoice.invoiceNumber} · {invoice.issuanceDate}
+                  </Text>
+                </View>
+                <Text style={styles.invoiceRowTotal}>
+                  {invoice.currency.symbol}
+                  {formatAmount(invoice.total)}
+                </Text>
+                <Pressable
+                  style={styles.invoiceRowDownload}
+                  onPress={() => handleRedownload(invoice)}
+                  disabled={downloadingId === invoice.id}
+                >
+                  {downloadingId === invoice.id ? (
+                    <ActivityIndicator size="small" color="#0D3B66" />
+                  ) : (
+                    <Ionicons
+                      name="download-outline"
+                      size={18}
+                      color="#0D3B66"
+                    />
+                  )}
+                </Pressable>
               </View>
-              <View style={styles.skeletonLines}>
-                <View style={[styles.skeletonBar, styles.skeletonBarDark]} />
-                <View style={[styles.skeletonBar, styles.skeletonBarLight]} />
-              </View>
-            </View>
-
-            <View style={[styles.skeletonCard, styles.skeletonCardBottom]}>
-              <View style={styles.skeletonIconCircle}>
-                <Image
-                  source={require("@/assets/images/icons/bx-search.png")}
-                  style={styles.skeletonIcon}
-                  resizeMode="contain"
-                />
-              </View>
-              <View style={styles.skeletonLines}>
-                <View style={[styles.skeletonBar, styles.skeletonBarDark]} />
-                <View style={[styles.skeletonBar, styles.skeletonBarLight]} />
-              </View>
-            </View>
+            ))}
           </View>
-        </View>
+        ) : (
+          <>
+            <View style={styles.illustrationContainer}>
+              <View style={styles.circleBox}>
+                <View style={styles.circle} />
 
-        <Text style={styles.emptyStateText}>
-          You don&apos;t have any Invoice history yet. Click the button below to
-          Create your first invoice
-        </Text>
-      </View>
+                <View style={[styles.skeletonCard, styles.skeletonCardTop]}>
+                  <View style={styles.skeletonIconCircle}>
+                    <Image
+                      source={require("@/assets/images/icons/bx-search.png")}
+                      style={styles.skeletonIcon}
+                      resizeMode="contain"
+                    />
+                  </View>
+                  <View style={styles.skeletonLines}>
+                    <View
+                      style={[styles.skeletonBar, styles.skeletonBarDark]}
+                    />
+                    <View
+                      style={[styles.skeletonBar, styles.skeletonBarLight]}
+                    />
+                  </View>
+                </View>
+
+                <View
+                  style={[styles.skeletonCard, styles.skeletonCardBottom]}
+                >
+                  <View style={styles.skeletonIconCircle}>
+                    <Image
+                      source={require("@/assets/images/icons/bx-search.png")}
+                      style={styles.skeletonIcon}
+                      resizeMode="contain"
+                    />
+                  </View>
+                  <View style={styles.skeletonLines}>
+                    <View
+                      style={[styles.skeletonBar, styles.skeletonBarDark]}
+                    />
+                    <View
+                      style={[styles.skeletonBar, styles.skeletonBarLight]}
+                    />
+                  </View>
+                </View>
+              </View>
+            </View>
+
+            <Text style={styles.emptyStateText}>
+              You don&apos;t have any Invoice history yet. Click the button
+              below to Create your first invoice
+            </Text>
+          </>
+        )}
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -112,9 +204,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   content: {
-    flex: 1,
+    flexGrow: 1,
     paddingHorizontal: 24,
     paddingTop: 12,
+    paddingBottom: 24,
   },
   menuButton: {
     alignSelf: "flex-start",
@@ -208,6 +301,57 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#1A1D1F",
     marginTop: 28,
+  },
+  invoiceList: {
+    marginTop: 16,
+    gap: 10,
+  },
+  invoiceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    backgroundColor: "#FAFAFA",
+    borderRadius: 12,
+    padding: 12,
+  },
+  invoiceRowIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#1477E6",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  invoiceRowIcon: {
+    width: 16,
+    height: 16,
+  },
+  invoiceRowInfo: {
+    flex: 1,
+  },
+  invoiceRowClient: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#1A1D1F",
+  },
+  invoiceRowMeta: {
+    fontSize: 12,
+    fontWeight: "400",
+    color: "#9CA3AF",
+    marginTop: 2,
+  },
+  invoiceRowTotal: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#0D3B66",
+  },
+  invoiceRowDownload: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 4,
   },
   illustrationContainer: {
     height: 260,

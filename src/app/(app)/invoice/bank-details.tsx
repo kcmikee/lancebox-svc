@@ -1,21 +1,46 @@
 import { Button } from "@/components/Button";
+import { FormField } from "@/components/FormField";
 import { InvoiceProgressStepper } from "@/components/InvoiceProgressStepper";
 import { Text } from "@/components/Text";
+import { bankDetailsSchema } from "@/lib/validation";
+import { useInvoiceDraft } from "@/store/invoiceDraft";
 import { router } from "expo-router";
-import { useState } from "react";
-import { Image, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
+import { useFormik } from "formik";
+import { useEffect, useState } from "react";
+import { Image, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function BankDetails() {
-  const [bankNumber, setBankNumber] = useState("");
-  const [bankName, setBankName] = useState("");
-  const [accountName, setAccountName] = useState("");
-  const [terms, setTerms] = useState("");
+  const setDraft = useInvoiceDraft((state) => state.setDraft);
+  const [initialDraft] = useState(() => useInvoiceDraft.getState());
 
-  const isFormValid =
-    bankNumber.trim().length > 0 &&
-    bankName.trim().length > 0 &&
-    accountName.trim().length > 0;
+  const formik = useFormik({
+    initialValues: {
+      bankNumber: initialDraft.bankNumber,
+      bankName: initialDraft.bankName,
+      accountName: initialDraft.accountName,
+      terms: initialDraft.terms,
+    },
+    validationSchema: bankDetailsSchema,
+    validateOnMount: true,
+    onSubmit: () => {
+      router.push("/invoice/preview");
+    },
+  });
+
+  useEffect(() => {
+    setDraft(formik.values);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formik.values]);
+
+  const handleNext = () => {
+    formik.setTouched({
+      bankNumber: true,
+      bankName: true,
+      accountName: true,
+    });
+    formik.submitForm();
+  };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
@@ -41,55 +66,63 @@ export default function BankDetails() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.label}>Bank Number</Text>
-          <TextInput
-            style={styles.textInput}
-            value={bankNumber}
-            onChangeText={setBankNumber}
+          <FormField
+            label="Bank Number"
+            value={formik.values.bankNumber}
+            onChangeText={(value) =>
+              formik.setFieldValue("bankNumber", value)
+            }
+            onBlur={() => formik.setFieldTouched("bankNumber", true)}
             placeholder="Enter your Bank Number"
-            placeholderTextColor="#9CA3AF"
             keyboardType="numeric"
+            error={
+              formik.touched.bankNumber ? formik.errors.bankNumber : undefined
+            }
           />
 
-          <Text style={[styles.label, styles.labelSpaced]}>Name of Bank</Text>
-          <TextInput
-            style={styles.textInput}
-            value={bankName}
-            onChangeText={setBankName}
+          <FormField
+            label="Name of Bank"
+            value={formik.values.bankName}
+            onChangeText={(value) => formik.setFieldValue("bankName", value)}
+            onBlur={() => formik.setFieldTouched("bankName", true)}
             placeholder="Enter your Bank Name"
-            placeholderTextColor="#9CA3AF"
+            error={
+              formik.touched.bankName ? formik.errors.bankName : undefined
+            }
+            style={styles.labelSpaced}
           />
 
-          <Text style={[styles.label, styles.labelSpaced]}>
-            Name of Account
-          </Text>
-          <TextInput
-            style={styles.textInput}
-            value={accountName}
-            onChangeText={setAccountName}
+          <FormField
+            label="Name of Account"
+            value={formik.values.accountName}
+            onChangeText={(value) =>
+              formik.setFieldValue("accountName", value)
+            }
+            onBlur={() => formik.setFieldTouched("accountName", true)}
             placeholder="Enter the Name on Account"
-            placeholderTextColor="#9CA3AF"
+            error={
+              formik.touched.accountName
+                ? formik.errors.accountName
+                : undefined
+            }
+            style={styles.labelSpaced}
           />
 
-          <Text style={[styles.label, styles.labelSpaced]}>
-            Terms of Payment
-          </Text>
-          <TextInput
-            style={[styles.textInput, styles.termsInput]}
-            value={terms}
-            onChangeText={setTerms}
+          <FormField
+            label="Terms of Payment"
+            value={formik.values.terms}
+            onChangeText={(value) => formik.setFieldValue("terms", value)}
             placeholder="e,g Payment will be made in installments"
-            placeholderTextColor="#9CA3AF"
             multiline
+            style={styles.labelSpaced}
           />
         </View>
 
         <Button
           label="Preview Invoice"
-          disabled={!isFormValid}
           textColor="#FFFFFF"
-          style={[styles.nextButton, isFormValid && styles.nextButtonActive]}
-          onPress={() => router.push("/invoice/preview")}
+          style={[styles.nextButton, formik.isValid && styles.nextButtonActive]}
+          onPress={handleNext}
         />
       </ScrollView>
     </SafeAreaView>
@@ -130,30 +163,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     marginTop: 20,
   },
-  label: {
-    fontSize: 13,
-    fontWeight: "400",
-    color: "#374151",
-    marginBottom: 8,
-  },
   labelSpaced: {
     marginTop: 16,
-  },
-  textInput: {
-    height: 48,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    fontSize: 14,
-    fontFamily: "Pretendard-Regular",
-    color: "#1A1D1F",
-    backgroundColor: "#FFFFFF",
-  },
-  termsInput: {
-    height: 56,
-    paddingTop: 14,
-    textAlignVertical: "top",
   },
   nextButton: {
     marginHorizontal: 24,

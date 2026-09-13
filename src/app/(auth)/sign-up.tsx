@@ -3,48 +3,41 @@ import { Button } from "@/components/Button";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { SocialButton } from "@/components/SocialButton";
 import { Text } from "@/components/Text";
+import { signUpSchema } from "@/lib/validation";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { useFormik } from "formik";
 import { useEffect, useState } from "react";
 import { Image, Pressable, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const HOLD_DURATION_MS = 1500;
 
 export default function SignUp() {
-  const [email, setEmail] = useState("peter@gmail.com");
-  const [password, setPassword] = useState("password123");
-  const [confirmPassword, setConfirmPassword] = useState("password123");
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+
+  const formik = useFormik({
+    initialValues: { email: "", password: "", confirmPassword: "" },
+    validationSchema: signUpSchema,
+    onSubmit: async () => {
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+      setIsTransitioning(true);
+    },
+  });
 
   useEffect(() => {
     if (!isTransitioning) {
       return;
     }
     const timeout = setTimeout(() => {
-      router.replace({ pathname: "/setup", params: { email, fly: "1" } });
+      router.replace({
+        pathname: "/setup",
+        params: { email: formik.values.email, fly: "1" },
+      });
     }, HOLD_DURATION_MS);
     return () => clearTimeout(timeout);
-  }, [isTransitioning, email]);
-
-  const isEmailValid = EMAIL_PATTERN.test(email);
-  const isPasswordValid = password.length >= 8;
-  const isConfirmPasswordValid =
-    confirmPassword.length > 0 && confirmPassword === password;
-  const isFormValid = isEmailValid && isPasswordValid && isConfirmPasswordValid;
-
-  const handleSignUp = () => {
-    if (!isFormValid || isSubmitting) {
-      return;
-    }
-    setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setIsTransitioning(true);
-    }, 1200);
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isTransitioning]);
 
   if (isTransitioning) {
     return <LoadingScreen />;
@@ -70,35 +63,54 @@ export default function SignUp() {
         <View style={styles.form}>
           <AuthTextField
             label="Email Address"
-            value={email}
-            onChangeText={setEmail}
+            value={formik.values.email}
+            onChangeText={(value) => formik.setFieldValue("email", value)}
+            onBlur={() => formik.setFieldTouched("email", true)}
             placeholder="Peter@gmail.com"
             keyboardType="email-address"
-            isValid={isEmailValid}
+            isValid={!formik.errors.email && formik.values.email.length > 0}
+            error={formik.touched.email ? formik.errors.email : undefined}
           />
           <AuthTextField
             label="Password"
-            value={password}
-            onChangeText={setPassword}
+            value={formik.values.password}
+            onChangeText={(value) => formik.setFieldValue("password", value)}
+            onBlur={() => formik.setFieldTouched("password", true)}
             placeholder="Password"
             secureTextEntry
-            isValid={isPasswordValid}
+            isValid={
+              !formik.errors.password && formik.values.password.length > 0
+            }
+            error={
+              formik.touched.password ? formik.errors.password : undefined
+            }
           />
           <AuthTextField
             label="Confirm Password"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
+            value={formik.values.confirmPassword}
+            onChangeText={(value) =>
+              formik.setFieldValue("confirmPassword", value)
+            }
+            onBlur={() => formik.setFieldTouched("confirmPassword", true)}
             placeholder="Confirm password"
             secureTextEntry
-            isValid={isConfirmPasswordValid}
+            isValid={
+              !formik.errors.confirmPassword &&
+              formik.values.confirmPassword.length > 0
+            }
+            error={
+              formik.touched.confirmPassword
+                ? formik.errors.confirmPassword
+                : undefined
+            }
           />
         </View>
 
         <Button
           label="Sign Up"
           loadingLabel="Signing Up"
-          isLoading={isSubmitting}
-          onPress={handleSignUp}
+          isLoading={formik.isSubmitting}
+          onPress={formik.submitForm}
           style={styles.signUpButton}
         />
 

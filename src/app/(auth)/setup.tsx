@@ -1,7 +1,9 @@
 import { Button } from "@/components/Button";
 import { FlyingLogo } from "@/components/FlyingLogo";
 import { Text } from "@/components/Text";
+import { reportError } from "@/lib/errorReporting";
 import { useAuth } from "@/store/auth";
+import { useProfile, type ProfileRole } from "@/store/profile";
 import { Image as ExpoImage } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams } from "expo-router";
@@ -36,43 +38,54 @@ export default function Setup() {
   }>();
   const insets = useSafeAreaInsets();
   const signIn = useAuth((state) => state.signIn);
-  const [selectedRole, setSelectedRole] = useState<string | null>(null);
+  const setProfileLogoUri = useProfile((state) => state.setLogoUri);
+  const setProfileRole = useProfile((state) => state.setRole);
+  const [selectedRole, setSelectedRole] = useState<ProfileRole | null>(null);
   const [logoUri, setLogoUri] = useState<string | null>(null);
   const [isProceeding, setIsProceeding] = useState(false);
   const [showFlyingLogo, setShowFlyingLogo] = useState(fly === "1");
 
   const handlePickLogo = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
+    try {
+      const permission =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert(
+          "Photo access needed",
+          "Allow photo library access to upload a logo.",
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: "images",
+        quality: 1,
+      });
+
+      if (result.canceled) {
+        return;
+      }
+
+      const asset = result.assets[0];
+
+      if (!isAllowedLogoType(asset)) {
+        Alert.alert("Unsupported file", "Please choose a PNG or JPG image.");
+        return;
+      }
+
+      if (asset.fileSize && asset.fileSize > MAX_LOGO_SIZE_BYTES) {
+        Alert.alert("File too large", "Please choose an image under 20mb.");
+        return;
+      }
+
+      setLogoUri(asset.uri);
+    } catch (error) {
+      reportError(error, "setup:handlePickLogo");
       Alert.alert(
-        "Photo access needed",
-        "Allow photo library access to upload a logo.",
+        "Something went wrong",
+        "We couldn't open your photo library. Please try again.",
       );
-      return;
     }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: "images",
-      quality: 1,
-    });
-
-    if (result.canceled) {
-      return;
-    }
-
-    const asset = result.assets[0];
-
-    if (!isAllowedLogoType(asset)) {
-      Alert.alert("Unsupported file", "Please choose a PNG or JPG image.");
-      return;
-    }
-
-    if (asset.fileSize && asset.fileSize > MAX_LOGO_SIZE_BYTES) {
-      Alert.alert("File too large", "Please choose an image under 20mb.");
-      return;
-    }
-
-    setLogoUri(asset.uri);
   };
 
   const handleProceed = () => {
@@ -80,6 +93,8 @@ export default function Setup() {
       return;
     }
     setIsProceeding(true);
+    setProfileLogoUri(logoUri);
+    setProfileRole(selectedRole);
     setTimeout(() => {
       signIn({ userId: email ?? "user" });
     }, 1200);
