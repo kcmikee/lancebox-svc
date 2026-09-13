@@ -6,11 +6,16 @@ export const signUpSchema = Yup.object({
     .email("Enter a valid email address")
     .required("Email is required"),
   password: Yup.string()
-    .min(8, "Password must be at least 8 characters")
-    .required("Password is required"),
+    .required("Password is required")
+    .min(8, "Password must be at least 8 characters"),
   confirmPassword: Yup.string()
-    .oneOf([Yup.ref("password")], "Passwords do not match")
-    .required("Please confirm your password"),
+    .required("Please confirm your password")
+    .test("passwords-match", "Passwords do not match", function (value) {
+      if (!value) {
+        return true;
+      }
+      return value === this.parent.password;
+    }),
 });
 
 function positiveNumberString(message: string) {
@@ -70,7 +75,10 @@ export const invoiceDetailsSchema = Yup.object({
 export const bankDetailsSchema = Yup.object({
   bankNumber: Yup.string()
     .trim()
-    .matches(/^\d{6,20}$/, "Enter a valid bank number (digits only)")
+    .matches(/^\d{6,20}$/, {
+      message: "Enter a valid bank number (digits only)",
+      excludeEmptyString: true,
+    })
     .required("Bank number is required"),
   bankName: Yup.string().trim().required("Bank name is required"),
   accountName: Yup.string().trim().required("Account name is required"),

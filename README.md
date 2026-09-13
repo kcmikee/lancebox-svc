@@ -9,6 +9,7 @@ LanceBox is a mobile invoicing app built with Expo Router. It walks a user throu
 - [Zustand](https://github.com/pmndrs/zustand) + `persist` (backed by `@react-native-async-storage/async-storage`) for local state
 - [Formik](https://formik.org) + [Yup](https://github.com/jquense/yup) for form validation
 - [expo-print](https://docs.expo.dev/versions/latest/sdk/print/) + [expo-sharing](https://docs.expo.dev/versions/latest/sdk/sharing/) for PDF generation and export
+- [Jest](https://jestjs.io) (`jest-expo` preset) + [Testing Library](https://callstack.github.io/react-native-testing-library/) for unit and component tests
 - TypeScript throughout
 
 ## Features
@@ -17,6 +18,7 @@ LanceBox is a mobile invoicing app built with Expo Router. It walks a user throu
 - **Invoice creation flow** — invoice details → bank details → preview → send, all validated inline and autosaved as a draft as you go
 - **PDF export** — download or share a generated invoice as a real PDF from the preview screen, the send screen, or any previously saved invoice on the home screen
 - **Local persistence** — session, profile, in-progress invoice draft, and saved invoices all survive an app restart (no backend; everything lives in `AsyncStorage`)
+- **Navigation drawer** — a slide-out drawer for switching between the home screen and starting a new invoice
 - **Error handling** — a root-level Expo Router error boundary with a recoverable fallback screen, a global JS error handler, and a custom `+not-found` screen for unmatched routes
 
 ## Getting started
@@ -36,8 +38,8 @@ Scan the QR code with [Expo Go](https://expo.dev/go), or press `i` / `a` in the 
 src/
   app/            Expo Router routes (screens + layouts)
     (auth)/        sign-up, profile setup
-    (app)/         home, invoice creation flow
-  components/     Shared UI components
+    (app)/         home, invoice creation flow (details, bank details, preview, send)
+  components/     Shared UI components (each with a co-located *.test.tsx)
   store/          Zustand stores (auth, profile, invoice draft, saved invoices)
   lib/            Validation schemas, PDF generation, formatting helpers, error reporting
 ```
@@ -50,6 +52,6 @@ bunx expo lint                # lint
 npx tsc --noEmit              # typecheck
 bunx expo-doctor              # diagnose dependency/config issues
 bunx expo install --fix       # fix incompatible package versions
+bun run test                  # run the Jest test suite once
+bun run test:watch            # run Jest in watch mode
 ```
-
-There is no test suite configured in this repo currently.

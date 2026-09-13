@@ -23,6 +23,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function InvoiceDetails() {
@@ -110,284 +111,295 @@ export default function InvoiceDetails() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Pressable style={styles.closeButton} onPress={() => router.back()}>
-          <Image
-            source={require("@/assets/images/icons/x-close.png")}
-            style={styles.closeIcon}
-            resizeMode="contain"
-          />
-        </Pressable>
-
-        <View style={styles.header}>
-          <Text style={styles.heading}>New Invoice</Text>
-
-          <View style={styles.stepperWrapper}>
-            <InvoiceProgressStepper activeStep="invoice-details" />
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.label}>Invoice Number</Text>
-          <View style={styles.input}>
-            <Text style={styles.inputValue}>01</Text>
-          </View>
-
-          <FormField
-            label="Client's Name"
-            value={formik.values.clientName}
-            onChangeText={(value) => formik.setFieldValue("clientName", value)}
-            onBlur={() => formik.setFieldTouched("clientName", true)}
-            placeholder="Enter Client's Name"
-            error={
-              formik.touched.clientName ? formik.errors.clientName : undefined
-            }
-            style={styles.labelSpaced}
-          />
-
-          <FormField
-            label="Your Name"
-            value={formik.values.yourName}
-            onChangeText={(value) => formik.setFieldValue("yourName", value)}
-            onBlur={() => formik.setFieldTouched("yourName", true)}
-            placeholder="Enter Your Name"
-            error={
-              formik.touched.yourName ? formik.errors.yourName : undefined
-            }
-            style={styles.labelSpaced}
-          />
-
-          <View style={[styles.row, styles.labelSpaced]}>
-            <View style={styles.rowItem}>
-              <Text style={styles.label}>Issuance Date</Text>
-              <View style={[styles.input, styles.rowInputSpacing]}>
-                <Text style={styles.inputValue}>{issuanceDate}</Text>
-              </View>
-            </View>
-            <View style={styles.rowItem}>
-              <Text style={styles.label}>Currency</Text>
-              <Pressable
-                style={[
-                  styles.input,
-                  styles.selectInput,
-                  styles.rowInputSpacing,
-                  currencyError && styles.inputError,
-                ]}
-                onPress={() => {
-                  formik.setFieldTouched("currency", true);
-                  setIsCurrencyPickerVisible(true);
-                }}
-              >
-                <Text
-                  style={
-                    formik.values.currency
-                      ? styles.inputValue
-                      : styles.placeholderText
-                  }
-                >
-                  {formik.values.currency
-                    ? formik.values.currency.code
-                    : "Select"}
-                </Text>
-                <Ionicons name="chevron-down" size={18} color="#6B7280" />
-              </Pressable>
-              {currencyError ? (
-                <Text style={styles.errorText}>{currencyError}</Text>
-              ) : null}
-            </View>
-          </View>
-
-          <Text style={styles.sectionHeading}>Invoice Details</Text>
-
-          <FormField
-            label="Invoice Title"
-            value={formik.values.invoiceTitle}
-            onChangeText={(value) =>
-              formik.setFieldValue("invoiceTitle", value)
-            }
-            onBlur={() => formik.setFieldTouched("invoiceTitle", true)}
-            placeholder="Enter Invoice Title"
-            error={
-              formik.touched.invoiceTitle
-                ? formik.errors.invoiceTitle
-                : undefined
-            }
-          />
-        </View>
-
-        <View style={styles.itemSection}>
-          {items.map((item, index) => {
-            const itemAmount =
-              parseNumber(item.quantity) * parseNumber(item.price);
-            const touchedEntry = itemsTouched?.[index];
-            const errorEntry =
-              typeof itemsErrors === "object" ? itemsErrors?.[index] : undefined;
-            return (
-              <View
-                key={item.id}
-                style={index > 0 ? styles.itemDivider : undefined}
-              >
-                <FormField
-                  label="Item Description"
-                  value={item.description}
-                  onChangeText={(value) =>
-                    updateItem(item.id, { description: value })
-                  }
-                  onBlur={() =>
-                    formik.setFieldTouched(`items[${index}].description`, true)
-                  }
-                  placeholder="Enter a description"
-                  error={
-                    touchedEntry?.description
-                      ? errorEntry?.description
-                      : undefined
-                  }
-                />
-
-                <View style={[styles.row, styles.labelSpaced]}>
-                  <FormField
-                    label="Quantity"
-                    value={item.quantity}
-                    onChangeText={(value) =>
-                      updateItem(item.id, { quantity: value })
-                    }
-                    onBlur={() =>
-                      formik.setFieldTouched(`items[${index}].quantity`, true)
-                    }
-                    placeholder="e.g 2.00"
-                    keyboardType="numeric"
-                    error={
-                      touchedEntry?.quantity ? errorEntry?.quantity : undefined
-                    }
-                    style={styles.rowItem}
-                  />
-                  <FormField
-                    label="Price"
-                    value={item.price}
-                    onChangeText={(value) =>
-                      updateItem(item.id, { price: value })
-                    }
-                    onBlur={() =>
-                      formik.setFieldTouched(`items[${index}].price`, true)
-                    }
-                    placeholder="e.g 3,000,000.00"
-                    keyboardType="numeric"
-                    error={touchedEntry?.price ? errorEntry?.price : undefined}
-                    style={styles.rowItem}
-                  />
-                </View>
-
-                <View style={[styles.amountRow, styles.labelSpaced]}>
-                  <View style={styles.amountField}>
-                    <Text style={styles.label}>Amount</Text>
-                    <View style={[styles.input, styles.rowInputSpacing]}>
-                      <Text
-                        style={
-                          itemAmount > 0
-                            ? styles.inputValue
-                            : styles.placeholderText
-                        }
-                      >
-                        {formatAmount(itemAmount)}
-                      </Text>
-                    </View>
-                  </View>
-                  {items.length > 1 ? (
-                    <Pressable
-                      style={styles.deleteButton}
-                      onPress={() => removeItem(item.id)}
-                    >
-                      <Ionicons
-                        name="trash-outline"
-                        size={18}
-                        color="#4B5563"
-                      />
-                    </Pressable>
-                  ) : null}
-                </View>
-              </View>
-            );
-          })}
-
-          <Pressable style={styles.addItemButton} onPress={addItem}>
-            <Text style={styles.addItemText}>Add New Item</Text>
+      <KeyboardAvoidingView style={styles.flex} behavior="padding">
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <Pressable
+            style={styles.closeButton}
+            onPress={() => router.back()}
+            accessibilityRole="button"
+            accessibilityLabel="Close"
+          >
+            <Image
+              source={require("@/assets/images/icons/x-close.png")}
+              style={styles.closeIcon}
+              resizeMode="contain"
+            />
           </Pressable>
-        </View>
 
-        <View style={styles.summarySection}>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>SubTotal</Text>
-            <Text style={styles.summaryValue}>
-              {currencySymbol} {formatAmount(subtotal)}
-            </Text>
+          <View style={styles.header}>
+            <Text style={styles.heading}>New Invoice</Text>
+
+            <View style={styles.stepperWrapper}>
+              <InvoiceProgressStepper activeStep="invoice-details" />
+            </View>
           </View>
 
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>VAT</Text>
-            <View style={styles.percentColumn}>
-              <View style={styles.percentInputWrapper}>
-                <TextInput
+          <View style={styles.section}>
+            <Text style={styles.label}>Invoice Number</Text>
+            <View style={styles.input}>
+              <Text style={styles.inputValue}>01</Text>
+            </View>
+
+            <FormField
+              label="Client's Name"
+              value={formik.values.clientName}
+              onChangeText={(value) => formik.setFieldValue("clientName", value)}
+              onBlur={() => formik.setFieldTouched("clientName", true)}
+              placeholder="Enter Client's Name"
+              error={
+                formik.touched.clientName ? formik.errors.clientName : undefined
+              }
+              style={styles.labelSpaced}
+            />
+
+            <FormField
+              label="Your Name"
+              value={formik.values.yourName}
+              onChangeText={(value) => formik.setFieldValue("yourName", value)}
+              onBlur={() => formik.setFieldTouched("yourName", true)}
+              placeholder="Enter Your Name"
+              error={
+                formik.touched.yourName ? formik.errors.yourName : undefined
+              }
+              style={styles.labelSpaced}
+            />
+
+            <View style={[styles.row, styles.labelSpaced]}>
+              <View style={styles.rowItem}>
+                <Text style={styles.label}>Issuance Date</Text>
+                <View style={[styles.input, styles.rowInputSpacing]}>
+                  <Text style={styles.inputValue}>{issuanceDate}</Text>
+                </View>
+              </View>
+              <View style={styles.rowItem}>
+                <Text style={styles.label}>Currency</Text>
+                <Pressable
                   style={[
-                    styles.percentInput,
-                    formik.touched.vat && formik.errors.vat
+                    styles.input,
+                    styles.selectInput,
+                    styles.rowInputSpacing,
+                    currencyError && styles.inputError,
+                  ]}
+                  onPress={() => {
+                    formik.setFieldTouched("currency", true);
+                    setIsCurrencyPickerVisible(true);
+                  }}
+                >
+                  <Text
+                    style={
+                      formik.values.currency
+                        ? styles.inputValue
+                        : styles.placeholderText
+                    }
+                  >
+                    {formik.values.currency
+                      ? formik.values.currency.code
+                      : "Select"}
+                  </Text>
+                  <Ionicons name="chevron-down" size={18} color="#6B7280" />
+                </Pressable>
+                {currencyError ? (
+                  <Text style={styles.errorText}>{currencyError}</Text>
+                ) : null}
+              </View>
+            </View>
+
+            <Text style={styles.sectionHeading}>Invoice Details</Text>
+
+            <FormField
+              label="Invoice Title"
+              value={formik.values.invoiceTitle}
+              onChangeText={(value) =>
+                formik.setFieldValue("invoiceTitle", value)
+              }
+              onBlur={() => formik.setFieldTouched("invoiceTitle", true)}
+              placeholder="Enter Invoice Title"
+              error={
+                formik.touched.invoiceTitle
+                  ? formik.errors.invoiceTitle
+                  : undefined
+              }
+            />
+          </View>
+
+          <View style={styles.itemSection}>
+            {items.map((item, index) => {
+              const itemAmount =
+                parseNumber(item.quantity) * parseNumber(item.price);
+              const touchedEntry = itemsTouched?.[index];
+              const errorEntry =
+                typeof itemsErrors === "object" ? itemsErrors?.[index] : undefined;
+              return (
+                <View
+                  key={item.id}
+                  style={index > 0 ? styles.itemDivider : undefined}
+                >
+                  <FormField
+                    label="Item Description"
+                    value={item.description}
+                    onChangeText={(value) =>
+                      updateItem(item.id, { description: value })
+                    }
+                    onBlur={() =>
+                      formik.setFieldTouched(`items[${index}].description`, true)
+                    }
+                    placeholder="Enter a description"
+                    error={
+                      touchedEntry?.description
+                        ? errorEntry?.description
+                        : undefined
+                    }
+                  />
+
+                  <View style={[styles.row, styles.labelSpaced]}>
+                    <FormField
+                      label="Quantity"
+                      value={item.quantity}
+                      onChangeText={(value) =>
+                        updateItem(item.id, { quantity: value })
+                      }
+                      onBlur={() =>
+                        formik.setFieldTouched(`items[${index}].quantity`, true)
+                      }
+                      placeholder="e.g 2.00"
+                      keyboardType="numeric"
+                      error={
+                        touchedEntry?.quantity ? errorEntry?.quantity : undefined
+                      }
+                      style={styles.rowItem}
+                    />
+                    <FormField
+                      label="Price"
+                      value={item.price}
+                      onChangeText={(value) =>
+                        updateItem(item.id, { price: value })
+                      }
+                      onBlur={() =>
+                        formik.setFieldTouched(`items[${index}].price`, true)
+                      }
+                      placeholder="e.g 3,000,000.00"
+                      keyboardType="numeric"
+                      error={touchedEntry?.price ? errorEntry?.price : undefined}
+                      style={styles.rowItem}
+                    />
+                  </View>
+
+                  <View style={[styles.amountRow, styles.labelSpaced]}>
+                    <View style={styles.amountField}>
+                      <Text style={styles.label}>Amount</Text>
+                      <View style={[styles.input, styles.rowInputSpacing]}>
+                        <Text
+                          style={
+                            itemAmount > 0
+                              ? styles.inputValue
+                              : styles.placeholderText
+                          }
+                        >
+                          {formatAmount(itemAmount)}
+                        </Text>
+                      </View>
+                    </View>
+                    {items.length > 1 ? (
+                      <Pressable
+                        style={styles.deleteButton}
+                        onPress={() => removeItem(item.id)}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Delete item ${index + 1}`}
+                      >
+                        <Ionicons
+                          name="trash-outline"
+                          size={18}
+                          color="#4B5563"
+                        />
+                      </Pressable>
+                    ) : null}
+                  </View>
+                </View>
+              );
+            })}
+
+            <Pressable style={styles.addItemButton} onPress={addItem}>
+              <Text style={styles.addItemText}>Add New Item</Text>
+            </Pressable>
+          </View>
+
+          <View style={styles.summarySection}>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>SubTotal</Text>
+              <Text style={styles.summaryValue}>
+                {currencySymbol} {formatAmount(subtotal)}
+              </Text>
+            </View>
+
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>VAT</Text>
+              <View style={styles.percentColumn}>
+                <View style={styles.percentInputWrapper}>
+                  <TextInput
+                    testID="vat-input"
+                    style={[
+                      styles.percentInput,
+                      formik.touched.vat && formik.errors.vat
+                        ? styles.inputError
+                        : undefined,
+                    ]}
+                    value={formik.values.vat}
+                    onChangeText={(value) => formik.setFieldValue("vat", value)}
+                    onBlur={() => formik.setFieldTouched("vat", true)}
+                    keyboardType="numeric"
+                  />
+                  <Text style={styles.percentSign}>%</Text>
+                </View>
+                {formik.touched.vat && formik.errors.vat ? (
+                  <Text style={styles.errorText}>{formik.errors.vat}</Text>
+                ) : null}
+              </View>
+            </View>
+
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Shipping</Text>
+              <View style={styles.shippingColumn}>
+                <TextInput
+                  testID="shipping-input"
+                  style={[
+                    styles.shippingInput,
+                    formik.touched.shipping && formik.errors.shipping
                       ? styles.inputError
                       : undefined,
                   ]}
-                  value={formik.values.vat}
-                  onChangeText={(value) => formik.setFieldValue("vat", value)}
-                  onBlur={() => formik.setFieldTouched("vat", true)}
+                  value={formik.values.shipping}
+                  onChangeText={(value) =>
+                    formik.setFieldValue("shipping", value)
+                  }
+                  onBlur={() => formik.setFieldTouched("shipping", true)}
                   keyboardType="numeric"
                 />
-                <Text style={styles.percentSign}>%</Text>
+                {formik.touched.shipping && formik.errors.shipping ? (
+                  <Text style={styles.errorText}>{formik.errors.shipping}</Text>
+                ) : null}
               </View>
-              {formik.touched.vat && formik.errors.vat ? (
-                <Text style={styles.errorText}>{formik.errors.vat}</Text>
-              ) : null}
+            </View>
+
+            <View style={styles.summaryRow}>
+              <Text style={styles.totalLabel}>Total</Text>
+              <Text style={styles.totalValue}>
+                {currencySymbol} {formatAmount(total)}
+              </Text>
             </View>
           </View>
 
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Shipping</Text>
-            <View style={styles.shippingColumn}>
-              <TextInput
-                style={[
-                  styles.shippingInput,
-                  formik.touched.shipping && formik.errors.shipping
-                    ? styles.inputError
-                    : undefined,
-                ]}
-                value={formik.values.shipping}
-                onChangeText={(value) =>
-                  formik.setFieldValue("shipping", value)
-                }
-                onBlur={() => formik.setFieldTouched("shipping", true)}
-                keyboardType="numeric"
-              />
-              {formik.touched.shipping && formik.errors.shipping ? (
-                <Text style={styles.errorText}>{formik.errors.shipping}</Text>
-              ) : null}
-            </View>
-          </View>
-
-          <View style={styles.summaryRow}>
-            <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalValue}>
-              {currencySymbol} {formatAmount(total)}
-            </Text>
-          </View>
-        </View>
-
-        <Button
-          label="Next"
-          textColor="#FFFFFF"
-          style={[styles.nextButton, formik.isValid && styles.nextButtonActive]}
-          onPress={handleNext}
-        />
-      </ScrollView>
+          <Button
+            label="Next"
+            textColor="#FFFFFF"
+            style={[styles.nextButton, formik.isValid && styles.nextButtonActive]}
+            onPress={handleNext}
+          />
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       <Modal
         visible={isCurrencyPickerVisible}
@@ -425,6 +437,9 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: "#FFFFFF",
+  },
+  flex: {
+    flex: 1,
   },
   scrollContent: {
     paddingBottom: 32,

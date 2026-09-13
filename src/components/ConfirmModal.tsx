@@ -31,7 +31,12 @@ export function ConfirmModal({
     >
       <View style={styles.backdrop}>
         <View style={styles.card}>
-          <Pressable style={styles.closeButton} onPress={onClose}>
+          <Pressable
+            style={styles.closeButton}
+            onPress={onClose}
+            accessibilityRole="button"
+            accessibilityLabel="Close"
+          >
             <Image
               source={require("@/assets/images/icons/x-close.png")}
               style={styles.closeIcon}

@@ -124,6 +124,7 @@ export default function Home() {
                   {formatAmount(invoice.total)}
                 </Text>
                 <Pressable
+                  testID={`redownload-${invoice.id}`}
                   style={styles.invoiceRowDownload}
                   onPress={() => handleRedownload(invoice)}
                   disabled={downloadingId === invoice.id}

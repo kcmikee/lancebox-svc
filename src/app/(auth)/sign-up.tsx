@@ -9,6 +9,7 @@ import { router } from "expo-router";
 import { useFormik } from "formik";
 import { useEffect, useState } from "react";
 import { Image, Pressable, StyleSheet, View } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const HOLD_DURATION_MS = 1500;
@@ -45,7 +46,7 @@ export default function SignUp() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
-      <View style={styles.content}>
+      <KeyboardAvoidingView style={styles.content} behavior="padding">
         <Pressable style={styles.backRow} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={22} color="#171717" />
           <Text style={styles.backText}>Back</Text>
@@ -135,7 +136,7 @@ export default function SignUp() {
           <Text style={styles.footerLink}>Terms and Conditions</Text> and{" "}
           <Text style={styles.footerLink}>Policy</Text>
         </Text>
-      </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

@@ -1,4 +1,10 @@
-import { Alert, Pressable, StyleSheet, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  StyleSheet,
+  View,
+} from "react-native";
 import { router } from "expo-router";
 import { Text } from "@/components/Text";
 import { buildSavedInvoice, nextInvoiceNumber } from "@/lib/buildInvoice";
@@ -40,15 +46,27 @@ export default function SendInvoice() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Download or send invoice</Text>
-      <Pressable style={styles.button} onPress={finalize} disabled={isProcessing}>
-        <Text style={styles.buttonText}>
-          {isProcessing ? "Preparing…" : "Download invoice"}
-        </Text>
+      <Pressable
+        style={styles.button}
+        onPress={finalize}
+        disabled={isProcessing}
+      >
+        {isProcessing ? (
+          <ActivityIndicator size="small" color="#fff" />
+        ) : (
+          <Text style={styles.buttonText}>Download invoice</Text>
+        )}
       </Pressable>
-      <Pressable style={styles.button} onPress={finalize} disabled={isProcessing}>
-        <Text style={styles.buttonText}>
-          {isProcessing ? "Preparing…" : "Send to client"}
-        </Text>
+      <Pressable
+        style={styles.button}
+        onPress={finalize}
+        disabled={isProcessing}
+      >
+        {isProcessing ? (
+          <ActivityIndicator size="small" color="#fff" />
+        ) : (
+          <Text style={styles.buttonText}>Send to client</Text>
+        )}
       </Pressable>
       <Pressable onPress={() => router.back()}>
         <Text style={styles.back}>Back</Text>

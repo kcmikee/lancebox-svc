@@ -1,3 +1,4 @@
+import { reportError } from "@/lib/errorReporting";
 import { formatAmount } from "@/lib/invoiceFormat";
 import type { SavedInvoice } from "@/store/invoices";
 import * as Print from "expo-print";
@@ -185,14 +186,20 @@ export async function downloadInvoicePdf(invoice: SavedInvoice) {
     html: generateInvoiceHtml(invoice),
   });
 
-  const canShare = await Sharing.isAvailableAsync();
-  if (canShare) {
-    await Sharing.shareAsync(uri, {
-      mimeType: "application/pdf",
-      dialogTitle: `Invoice #${invoice.invoiceNumber}`,
-      UTI: "com.adobe.pdf",
+  Sharing.isAvailableAsync()
+    .then((canShare) => {
+      if (!canShare) {
+        return;
+      }
+      return Sharing.shareAsync(uri, {
+        mimeType: "application/pdf",
+        dialogTitle: `Invoice #${invoice.invoiceNumber}`,
+        UTI: "com.adobe.pdf",
+      });
+    })
+    .catch((error) => {
+      reportError(error, "invoicePdf:shareAsync");
     });
-  }
 
   return uri;
 }
