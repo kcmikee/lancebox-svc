@@ -11,6 +11,7 @@ import { useInvoices } from "@/store/invoices";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Image,
   Pressable,
@@ -76,7 +77,11 @@ export default function PreviewInvoice() {
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
       <View style={[styles.topRow, styles.paddingX]}>
-        <Pressable onPress={() => router.back()}>
+        <Pressable
+          onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel="Close"
+        >
           <Image
             source={require("@/assets/images/icons/x-close.png")}
             style={styles.closeIcon}
@@ -240,9 +245,14 @@ export default function PreviewInvoice() {
           onPress={() => setIsSaveInvoiceVisible(true)}
           disabled={isDownloading}
         >
-          <Text style={styles.downloadButtonText}>
-            {isDownloading ? "Preparing PDF…" : "Download Pdf"}
-          </Text>
+          {isDownloading ? (
+            <>
+              <ActivityIndicator size="small" color="#0B1E3F" />
+              <Text style={styles.downloadButtonText}>Preparing PDF…</Text>
+            </>
+          ) : (
+            <Text style={styles.downloadButtonText}>Download Pdf</Text>
+          )}
         </Pressable>
 
         <Pressable
@@ -479,8 +489,10 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 28,
     backgroundColor: "#4A90F7",
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    gap: 8,
     marginTop: 24,
   },
   downloadButtonText: {
