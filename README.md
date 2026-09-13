@@ -1,56 +1,55 @@
-# Welcome to your Expo app 👋
+# LanceBox
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+LanceBox is a mobile invoicing app built with Expo Router. It walks a user through account creation and profile setup, then lets them create, preview, save, and export invoices as PDF — all stored locally on-device.
 
-## Get started
+## Tech stack
 
-1. Install dependencies
+- [Expo](https://expo.dev) SDK 57, React 19, React Native 0.86 (new architecture)
+- [Expo Router](https://docs.expo.dev/router/introduction/) for file-based navigation, with typed routes
+- [Zustand](https://github.com/pmndrs/zustand) + `persist` (backed by `@react-native-async-storage/async-storage`) for local state
+- [Formik](https://formik.org) + [Yup](https://github.com/jquense/yup) for form validation
+- [expo-print](https://docs.expo.dev/versions/latest/sdk/print/) + [expo-sharing](https://docs.expo.dev/versions/latest/sdk/sharing/) for PDF generation and export
+- TypeScript throughout
 
-   ```bash
-   npm install
-   ```
+## Features
 
-2. Start the app
+- **Onboarding** — sign-up with validated email/password, profile setup (logo upload, business/individual role), with an animated logo transition between screens
+- **Invoice creation flow** — invoice details → bank details → preview → send, all validated inline and autosaved as a draft as you go
+- **PDF export** — download or share a generated invoice as a real PDF from the preview screen, the send screen, or any previously saved invoice on the home screen
+- **Local persistence** — session, profile, in-progress invoice draft, and saved invoices all survive an app restart (no backend; everything lives in `AsyncStorage`)
+- **Error handling** — a root-level Expo Router error boundary with a recoverable fallback screen, a global JS error handler, and a custom `+not-found` screen for unmatched routes
 
-   ```bash
-   npx expo start
-   ```
+## Getting started
 
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+This project uses [Bun](https://bun.sh) (`bun.lock` is checked in).
 
 ```bash
-npm run reset-project
+bun install
+bunx expo start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Scan the QR code with [Expo Go](https://expo.dev/go), or press `i` / `a` in the terminal to open an iOS Simulator / Android emulator.
 
-### Other setup steps
+## Project structure
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+```
+src/
+  app/            Expo Router routes (screens + layouts)
+    (auth)/        sign-up, profile setup
+    (app)/         home, invoice creation flow
+  components/     Shared UI components
+  store/          Zustand stores (auth, profile, invoice draft, saved invoices)
+  lib/            Validation schemas, PDF generation, formatting helpers, error reporting
+```
 
-## Learn more
+## Commands
 
-To learn more about developing your project with Expo, look at the following resources:
+```bash
+bunx expo start              # start the dev server
+bunx expo lint                # lint
+npx tsc --noEmit              # typecheck
+bunx expo-doctor              # diagnose dependency/config issues
+bunx expo install --fix       # fix incompatible package versions
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+There is no test suite configured in this repo currently.
