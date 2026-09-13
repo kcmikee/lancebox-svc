@@ -5,19 +5,29 @@ import { SocialButton } from "@/components/SocialButton";
 import { Text } from "@/components/Text";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Image, Pressable, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const TRANSITION_MS = 900;
+const HOLD_DURATION_MS = 1500;
 
 export default function SignUp() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [email, setEmail] = useState("peter@gmail.com");
+  const [password, setPassword] = useState("password123");
+  const [confirmPassword, setConfirmPassword] = useState("password123");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+
+  useEffect(() => {
+    if (!isTransitioning) {
+      return;
+    }
+    const timeout = setTimeout(() => {
+      router.replace({ pathname: "/setup", params: { email, fly: "1" } });
+    }, HOLD_DURATION_MS);
+    return () => clearTimeout(timeout);
+  }, [isTransitioning, email]);
 
   const isEmailValid = EMAIL_PATTERN.test(email);
   const isPasswordValid = password.length >= 8;
@@ -33,9 +43,6 @@ export default function SignUp() {
     setTimeout(() => {
       setIsSubmitting(false);
       setIsTransitioning(true);
-      setTimeout(() => {
-        router.replace({ pathname: "/setup", params: { email } });
-      }, TRANSITION_MS);
     }, 1200);
   };
 

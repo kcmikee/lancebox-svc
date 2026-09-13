@@ -7,12 +7,14 @@ const LOGO_SIZE = 60;
 export function LoadingSpinner() {
   return (
     <View style={styles.container}>
-      <Image
-        source={require("@/assets/animations/loading-spinner.gif")}
-        style={styles.ring}
-        autoplay
-        contentFit="contain"
-      />
+      <View style={styles.ring}>
+        <Image
+          source={require("@/assets/animations/loading-spinner.gif")}
+          style={StyleSheet.absoluteFill}
+          autoplay
+          contentFit="contain"
+        />
+      </View>
       <Image
         source={require("@/assets/images/icons/logo.png")}
         style={styles.logo}

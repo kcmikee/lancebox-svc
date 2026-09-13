@@ -1,6 +1,8 @@
 import { Button } from "@/components/Button";
+import { FlyingLogo } from "@/components/FlyingLogo";
 import { Text } from "@/components/Text";
 import { useAuth } from "@/store/auth";
+import { Image as ExpoImage } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
@@ -12,7 +14,10 @@ import {
   StyleSheet,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
 const MAX_LOGO_SIZE_BYTES = 20 * 1024 * 1024;
 const ALLOWED_LOGO_MIME_TYPES = ["image/png", "image/jpeg"];
@@ -25,11 +30,16 @@ function isAllowedLogoType(asset: ImagePicker.ImagePickerAsset) {
 }
 
 export default function Setup() {
-  const { email } = useLocalSearchParams<{ email?: string }>();
+  const { email, fly } = useLocalSearchParams<{
+    email?: string;
+    fly?: string;
+  }>();
+  const insets = useSafeAreaInsets();
   const signIn = useAuth((state) => state.signIn);
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [logoUri, setLogoUri] = useState<string | null>(null);
   const [isProceeding, setIsProceeding] = useState(false);
+  const [showFlyingLogo, setShowFlyingLogo] = useState(fly === "1");
 
   const handlePickLogo = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -76,133 +86,140 @@ export default function Setup() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <Image
-          source={require("@/assets/images/icons/logo.png")}
-          style={styles.topLogo}
-          resizeMode="contain"
-        />
-
-        <Text style={styles.heading}>Let’s Get to Know you Better</Text>
-
-        <View style={styles.breadcrumbContainer}>
-          <Text style={styles.breadcrumbActive}>Set Up Profile</Text>
-          <Image
-            source={require("@/assets/images/icons/chevron-right.png")}
-            style={styles.chevronActive}
-            resizeMode="contain"
-          />
-          <Text style={styles.breadcrumbInactive}>Personal Details</Text>
-          <Image
-            source={require("@/assets/images/icons/chevron-right.png")}
-            style={styles.chevronInactive}
-            resizeMode="contain"
-          />
-          <Image
-            source={require("@/assets/images/icons/check-circle.png")}
-            style={styles.checkCircle}
-            resizeMode="contain"
-          />
-        </View>
-
-        <Text style={styles.sectionLabel}>
-          Upload your logo/personal branding
-        </Text>
-
-        <Pressable style={styles.uploadBox} onPress={handlePickLogo}>
-          {logoUri ? (
-            <>
-              <Image
-                source={require("@/assets/images/icons/check-circle.png")}
-                style={styles.uploadSuccessIcon}
-                resizeMode="contain"
-              />
-              <Text style={styles.uploadSuccessText}>Upload successful</Text>
-            </>
-          ) : (
-            <>
-              <Image
-                source={require("@/assets/images/icons/image-plus.png")}
-                style={styles.imagePlus}
-                resizeMode="contain"
-              />
-              <Text style={styles.uploadPlaceholderText}>
-                Drag or seclect a file
-              </Text>
-            </>
-          )}
-        </Pressable>
-
-        <View style={styles.uploadMetaContainer}>
-          <Text style={styles.uploadMetaTitle}>Upload a logo</Text>
-          <Text style={styles.uploadMetaSubtitle}>
-            PNG or JPG less than 20mb
-          </Text>
-        </View>
-
-        <Text style={styles.roleSectionLabel}>
-          How will you like to use your Lancebox?
-        </Text>
-
-        <Pressable
-          style={[
-            styles.roleOptionCard,
-            selectedRole === "business" && styles.roleOptionCardSelected,
-          ]}
-          onPress={() => setSelectedRole("business")}
+    <>
+      <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
         >
-          <Text
-            style={[
-              styles.roleOptionText,
-              selectedRole === "business" && {
-                color: "#fff",
-              },
-            ]}
-          >
-            As a Business Owner
+          <ExpoImage
+            source={require("@/assets/images/icons/logo.png")}
+            style={[styles.topLogo, showFlyingLogo && styles.hiddenLogo]}
+            contentFit="contain"
+          />
+
+          <Text style={styles.heading}>Let’s Get to Know you Better</Text>
+
+          <View style={styles.breadcrumbContainer}>
+            <Text style={styles.breadcrumbActive}>Set Up Profile</Text>
+            <Image
+              source={require("@/assets/images/icons/chevron-right.png")}
+              style={styles.chevronActive}
+              resizeMode="contain"
+            />
+            <Text style={styles.breadcrumbInactive}>Personal Details</Text>
+            <Image
+              source={require("@/assets/images/icons/chevron-right.png")}
+              style={styles.chevronInactive}
+              resizeMode="contain"
+            />
+            <Image
+              source={require("@/assets/images/icons/check-circle.png")}
+              style={styles.checkCircle}
+              resizeMode="contain"
+            />
+          </View>
+
+          <Text style={styles.sectionLabel}>
+            Upload your logo/personal branding
           </Text>
-        </Pressable>
 
-        <Pressable
-          style={[
-            styles.roleOptionCard,
-            selectedRole === "individual" && styles.roleOptionCardSelected,
-          ]}
-          onPress={() => setSelectedRole("individual")}
-        >
-          <Text
-            style={[
-              styles.roleOptionText,
-              selectedRole === "individual" && {
-                color: "#fff",
-              },
-            ]}
-          >
-            As an Individual/Freelancer
+          <Pressable style={styles.uploadBox} onPress={handlePickLogo}>
+            {logoUri ? (
+              <>
+                <Image
+                  source={require("@/assets/images/icons/check-circle.png")}
+                  style={styles.uploadSuccessIcon}
+                  resizeMode="contain"
+                />
+                <Text style={styles.uploadSuccessText}>
+                  Upload successful
+                </Text>
+              </>
+            ) : (
+              <>
+                <Image
+                  source={require("@/assets/images/icons/image-plus.png")}
+                  style={styles.imagePlus}
+                  resizeMode="contain"
+                />
+                <Text style={styles.uploadPlaceholderText}>
+                  Drag or seclect a file
+                </Text>
+              </>
+            )}
+          </Pressable>
+
+          <View style={styles.uploadMetaContainer}>
+            <Text style={styles.uploadMetaTitle}>Upload a logo</Text>
+            <Text style={styles.uploadMetaSubtitle}>
+              PNG or JPG less than 20mb
+            </Text>
+          </View>
+
+          <Text style={styles.roleSectionLabel}>
+            How will you like to use your Lancebox?
           </Text>
-        </Pressable>
 
-        <Button
-          label="Proceed"
-          isLoading={isProceeding}
-          disabled={!selectedRole}
-          onPress={handleProceed}
-          textColor="#FFFFFF"
-          style={[
-            styles.proceedButton,
-            selectedRole ? styles.proceedButtonActive : undefined,
-          ]}
-        />
+          <Pressable
+            style={[
+              styles.roleOptionCard,
+              selectedRole === "business" && styles.roleOptionCardSelected,
+            ]}
+            onPress={() => setSelectedRole("business")}
+          >
+            <Text
+              style={[
+                styles.roleOptionText,
+                selectedRole === "business" && {
+                  color: "#fff",
+                },
+              ]}
+            >
+              As a Business Owner
+            </Text>
+          </Pressable>
 
-        <Pressable style={styles.skipContainer}>
-          <Text style={styles.skipText}>Skip for now</Text>
-        </Pressable>
-      </ScrollView>
-    </SafeAreaView>
+          <Pressable
+            style={[
+              styles.roleOptionCard,
+              selectedRole === "individual" && styles.roleOptionCardSelected,
+            ]}
+            onPress={() => setSelectedRole("individual")}
+          >
+            <Text
+              style={[
+                styles.roleOptionText,
+                selectedRole === "individual" && {
+                  color: "#fff",
+                },
+              ]}
+            >
+              As an Individual/Freelancer
+            </Text>
+          </Pressable>
+
+          <Button
+            label="Proceed"
+            isLoading={isProceeding}
+            disabled={!selectedRole}
+            onPress={handleProceed}
+            textColor="#FFFFFF"
+            style={[
+              styles.proceedButton,
+              selectedRole ? styles.proceedButtonActive : undefined,
+            ]}
+          />
+
+          <Pressable style={styles.skipContainer}>
+            <Text style={styles.skipText}>Skip for now</Text>
+          </Pressable>
+        </ScrollView>
+      </SafeAreaView>
+      {showFlyingLogo && (
+        <FlyingLogo insets={insets} onDone={() => setShowFlyingLogo(false)} />
+      )}
+    </>
   );
 }
 
@@ -221,6 +238,9 @@ const styles = StyleSheet.create({
     height: 40,
     alignSelf: "center",
     marginTop: 8,
+  },
+  hiddenLogo: {
+    opacity: 0,
   },
   heading: {
     fontSize: 22,
