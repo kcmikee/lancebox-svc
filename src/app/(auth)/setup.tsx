@@ -100,6 +100,14 @@ export default function Setup() {
     }, 1200);
   };
 
+  const handleSkip = () => {
+    if (isProceeding) {
+      return;
+    }
+    setIsProceeding(true);
+    signIn({ userId: email ?? "user" });
+  };
+
   return (
     <>
       <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
@@ -226,8 +234,18 @@ export default function Setup() {
             ]}
           />
 
-          <Pressable style={styles.skipContainer}>
-            <Text style={styles.skipText}>Skip for now</Text>
+          <Pressable
+            style={styles.skipContainer}
+            onPress={handleSkip}
+            disabled={isProceeding}
+            accessibilityRole="button"
+            accessibilityLabel="Skip for now"
+          >
+            <Text
+              style={[styles.skipText, isProceeding && styles.skipTextDisabled]}
+            >
+              Skip for now
+            </Text>
           </Pressable>
         </ScrollView>
       </SafeAreaView>
@@ -395,5 +413,8 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: "#3898EC",
     textDecorationLine: "underline",
+  },
+  skipTextDisabled: {
+    opacity: 0.5,
   },
 });

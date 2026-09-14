@@ -119,4 +119,31 @@ describe("Setup", () => {
     expect(signIn).toHaveBeenCalledWith({ userId: "peter@gmail.com" });
     jest.useRealTimers();
   });
+
+  it("signs in immediately when Skip for now is tapped, without a role or logo", () => {
+    (useLocalSearchParams as jest.Mock).mockReturnValue({
+      email: "peter@gmail.com",
+    });
+    const signIn = jest.fn();
+    useAuth.setState({ signIn });
+
+    render(<Setup />);
+    fireEvent.press(screen.getByLabelText("Skip for now"));
+
+    expect(signIn).toHaveBeenCalledWith({ userId: "peter@gmail.com" });
+    expect(useProfile.getState().role).toBeNull();
+    expect(useProfile.getState().logoUri).toBeNull();
+  });
+
+  it("does not sign in twice if Skip is tapped repeatedly", () => {
+    const signIn = jest.fn();
+    useAuth.setState({ signIn });
+
+    render(<Setup />);
+    const skipButton = screen.getByLabelText("Skip for now");
+    fireEvent.press(skipButton);
+    fireEvent.press(skipButton);
+
+    expect(signIn).toHaveBeenCalledTimes(1);
+  });
 });
